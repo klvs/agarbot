@@ -1,0 +1,15 @@
+{
+  "name": "agaroi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "agario-client": "^1.2.4",
+    "socks": "^1.1.8"
+  }
+}
