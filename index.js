@@ -4,6 +4,7 @@ var region = 'US-Atlanta';
 var Socks = require('socks');
 var client = new AgarioClient('worker'); //create new client and call it "worker" (not nickname)
 var interval_id = 0; //here we will store setInterval's ID
+var ballId = null;
 
 var target_server = process.argv[2];
 console.log(process.argv);
@@ -43,22 +44,11 @@ function attemptLogin(cb) {
 	    	setTimeout(function(){cb(false)}, 100);
 	    }
 	});
+	// AgarioClient.servers.getFFAServer({region: 'US-Atlanta'}, function(srv) { //requesting FFA server
+	//     if(!srv.server) return console.log('Failed to request server (error=' + srv.error + ', error_source=' + srv.error_source + ')');
+	//     client.connect('ws://' + srv.server, srv.key); //do not forget to add ws://
+	// });
 }
-
-client.on('connected', function() { //when we connected to server
-    client.log('spawning');
-    client.spawn('agario-client'); //spawning new ball
-	// setInterval(100,moveTo);
-	moveTo();
-});
-
-function moveTo() {
-	client.moveTo(1000,2000);
-}
-
-client.on('disconnect', function(e) {
-	console.log('disconnected')
-});
 
 function handleLogin(success) {
 	if(!success) {
@@ -66,6 +56,42 @@ function handleLogin(success) {
 		attemptLogin(handleLogin);
 	}
 }
+
+client.on('connected', function() { //when we connected to server
+    client.log('spawning');
+    client.spawn('agario-client'); //spawning new ball
+	setInterval(printLocation,100);
+	spawnRoutine();
+});
+
+
+function printLocation() {
+	if(ballId) {
+		console.log(client.balls[ballId].x + ' ' + client.balls[ballId].y)
+	}
+}
+
+function spawnRoutine() {
+	client.spawn('agario-client');
+	client.moveTo(1000,2000);
+}
+
+client.on('disconnect', function(e) {
+	console.log('disconnected')
+});
+
+client.on('ballMove', function(ballId, oldX, oldY, newX, newY) {
+	// console.log('location: ' + newX + ' ' + newY);
+});
+
+client.on('myNewBall', function(ball_id) { //when i got new ball
+    client.log('my new ball ' + ball_id + ', total ' + client.my_balls.length);
+    ballId = ball_id;
+});
+
+client.on('lostMyBalls', function() {
+	spawnRoutine();
+});
 
 attemptLogin(handleLogin);
 
