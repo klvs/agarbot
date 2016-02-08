@@ -2,20 +2,31 @@ var http = require('http');
 var AgarioClient = require('agario-client'); //Use this in your scripts
 var region = 'US-Atlanta';
 var Socks = require('socks');
+var io = require('socket.io-client');
+
 var client = new AgarioClient('worker'); //create new client and call it "worker" (not nickname)
-var interval_id = 0; //here we will store setInterval's ID
+var intervalID = 0; //here we will store setInterval's ID
 var ballId = null;
 
 var target_server = process.argv[2];
-console.log(process.argv);
+// x and y to go to
+var target_x = 0;
+var target_y = 0;
+
+var moveTimeoutID = 0;
+var tries = 0;
+
+// communicate with tracker
+io.emit('start', 'bot connected');
+
 
 function createAgent() {
     return new Socks.Agent({
-            proxy: {
-                ipaddress: process.argv[4],
-                port: parseInt(process.argv[5]),
-                type: parseInt(process.argv[3])
-            }}
+        proxy: {
+            ipaddress: process.argv[4],
+            port: parseInt(process.argv[5]),
+            type: parseInt(process.argv[3])
+        }}
     );
 }
 
@@ -36,10 +47,9 @@ function serverOpts() {
 function attemptLogin(cb) {
 	AgarioClient.servers.getFFAServer(serverOpts(), function(srv) { //requesting FFA server
 	    if(!srv.server) return console.log('Failed to request server (error=' + srv.error + ', error_source=' + srv.error_source + ')');
-	    console.log(target_server == srv.server + ' target: ' + target_server + ' current: ' + srv.server);
+	    console.log('target: ' + target_server + ' current: ' + srv.server);
 	    if(target_server == srv.server){
 	    	client.connect('ws://' + srv.server, srv.key); //do not forget to add ws://
-
 	    } else {
 	    	setTimeout(function(){cb(false)}, 100);
 	    }
@@ -52,18 +62,16 @@ function attemptLogin(cb) {
 
 function handleLogin(success) {
 	if(!success) {
-		console.log(handleLogin)
+		tries++;
 		attemptLogin(handleLogin);
 	}
 }
 
 client.on('connected', function() { //when we connected to server
     client.log('spawning');
-    client.spawn('agario-client'); //spawning new ball
 	setInterval(printLocation,100);
 	spawnRoutine();
 });
-
 
 function printLocation() {
 	if(ballId) {
@@ -73,15 +81,21 @@ function printLocation() {
 
 function spawnRoutine() {
 	client.spawn('agario-client');
-	client.moveTo(1000,2000);
+	var moveTimeoutID = setInterval(moveToTarget, 100);
+}
+
+function moveToTarget() {
+	client.moveTo(target_x,target_y);
+}
+
+function cancel() {
+	console.log('stopping');
+	clearInterval(intervalID);
 }
 
 client.on('disconnect', function(e) {
-	console.log('disconnected')
-});
-
-client.on('ballMove', function(ballId, oldX, oldY, newX, newY) {
-	// console.log('location: ' + newX + ' ' + newY);
+	console.log('disconnected');
+	cancel();
 });
 
 client.on('myNewBall', function(ball_id) { //when i got new ball
@@ -90,6 +104,7 @@ client.on('myNewBall', function(ball_id) { //when i got new ball
 });
 
 client.on('lostMyBalls', function() {
+	cancel();
 	spawnRoutine();
 });
 
