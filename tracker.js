@@ -25,7 +25,7 @@ client.on('myNewBall', function(ball_id) {
 
 function emitLocation() {
 	console.log(client.balls[ballId].x + ' ' + client.balls[ballId].y)
-	ioClient.emit('master_location', {
+	ioClient.emit('master_location_report', {
 		x: client.balls[ballId].x,
 		y: client.balls[ballId].y
 	});

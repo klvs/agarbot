@@ -2,7 +2,8 @@ var http = require('http');
 var AgarioClient = require('agario-client'); //Use this in your scripts
 var region = 'US-Atlanta';
 var Socks = require('socks');
-var io = require('socket.io-client');
+var ioClient = require('socket.io-client')('allexr.com:3000');
+
 
 var client = new AgarioClient('worker'); //create new client and call it "worker" (not nickname)
 var intervalID = 0; //here we will store setInterval's ID
@@ -17,8 +18,10 @@ var moveTimeoutID = 0;
 var tries = 0;
 
 // communicate with tracker
-io.emit('start', 'bot connected');
-
+ioClient.on('master_location', function(location){
+	target_x = location.x;
+	target_y = location.y;
+})
 
 function createAgent() {
     return new Socks.Agent({
