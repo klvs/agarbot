@@ -1,7 +1,8 @@
 //this is example of API usage
 var http = require('http');
 var AgarioClient = require('agario-client');
-var ioClient = require('socket.io-client');
+var ioClient = require('socket.io-client')('allexr.com:3000');
+var socket = null;
 
 var client = new AgarioClient('worker');
 var target_server = process.argv[2];
@@ -9,7 +10,9 @@ var target_server = process.argv[2];
 client.auth_token = '';
 var ballId = null;
 
-ioClient.connect('allexr.com:3000');
+// ioClient.on('connect', function(socket) {
+// 	socket = socket;
+// });
 
 client.on('connected', function() { 
 	setInterval(emitLocation,100);
