@@ -88,6 +88,7 @@ function spawnRoutine() {
 }
 
 function moveToTarget() {
+	console.log('moving to: ' target_x + ' ' + target_y);
 	client.moveTo(target_x,target_y);
 }
 
